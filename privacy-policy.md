@@ -21,6 +21,6 @@ We respect your privacy.
 - To manage ad personalization, visit your device’s Google Ads settings.  
 
 ## Contact
-For questions or concerns: **kai.dubash@gmail.com**
+For questions or concerns: **motosdemarca@gmail.com**
 
 **microApps · Days Since**
