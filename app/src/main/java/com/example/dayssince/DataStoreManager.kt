@@ -11,60 +11,44 @@ import org.json.JSONArray
 import org.json.JSONObject
 import java.time.LocalDate
 
-private val Context.dataStore by preferencesDataStore(name = "days_since_prefs")
+private val Context.dataStore by preferencesDataStore(name = "days_since_store")
 
 class DataStoreManager(private val context: Context) {
 
     companion object {
-        private val KEY_COUNTERS_JSON = stringPreferencesKey("counters_json")
+        private val COUNTERS_KEY = stringPreferencesKey("counters_json")
     }
 
-    /** Flujo con la lista de contadores persistidos (o lista vacía si no hay nada). */
-    val countersFlow: Flow<List<Counter>> =
-        context.dataStore.data.map { prefs ->
-            val json = prefs[KEY_COUNTERS_JSON] ?: "[]"
-            decodeCounters(json)
-        }
-
-    /** Guarda la lista completa (KISS). */
+    // Save the list as a JSON string
     suspend fun saveCounters(counters: List<Counter>) {
-        val json = encodeCounters(counters)
+        val jsonArray = JSONArray()
+        for (c in counters) {
+            val obj = JSONObject()
+            obj.put("id", c.id)
+            obj.put("title", c.title)
+            obj.put("startDate", c.startDate.toString())
+            jsonArray.put(obj)
+        }
         context.dataStore.edit { prefs ->
-            prefs[KEY_COUNTERS_JSON] = json
+            prefs[COUNTERS_KEY] = jsonArray.toString()
         }
     }
 
-    // --- Utilidades de codificación KISS (JSON) ---
-
-    private fun encodeCounters(list: List<Counter>): String {
-        val arr = JSONArray()
-        list.forEach { c ->
-            val obj = JSONObject().apply {
-                put("id", c.id)
-                put("title", c.title)
-                // ISO-8601: yyyy-MM-dd
-                put("startDate", c.startDate.toString())
-            }
-            arr.put(obj)
+    // Read and parse the list back into Counter objects
+    val countersFlow: Flow<List<Counter>> = context.dataStore.data.map { prefs ->
+        val jsonString = prefs[COUNTERS_KEY] ?: "[]"
+        val array = JSONArray(jsonString)
+        val list = mutableListOf<Counter>()
+        for (i in 0 until array.length()) {
+            val obj = array.getJSONObject(i)
+            list.add(
+                Counter(
+                    id = obj.getLong("id"),
+                    title = obj.getString("title"),
+                    startDate = LocalDate.parse(obj.getString("startDate"))
+                )
+            )
         }
-        return arr.toString()
-    }
-
-    private fun decodeCounters(json: String): List<Counter> {
-        return runCatching {
-            val arr = JSONArray(json)
-            buildList {
-                for (i in 0 until arr.length()) {
-                    val obj = arr.getJSONObject(i)
-                    add(
-                        Counter(
-                            id = obj.getLong("id"),
-                            title = obj.getString("title"),
-                            startDate = LocalDate.parse(obj.getString("startDate"))
-                        )
-                    )
-                }
-            }
-        }.getOrElse { emptyList() }
+        list
     }
 }

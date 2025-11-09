@@ -3,15 +3,13 @@ package com.example.dayssince
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import java.time.LocalDate
 
-class DaysSinceViewModel(application: Application) : AndroidViewModel(application) {
+class DaysSinceViewModel(app: Application) : AndroidViewModel(app) {
 
-    private val store = DataStoreManager(application)
+    private val dataStore = DataStoreManager(app)
 
     private val _counters = MutableStateFlow<List<Counter>>(emptyList())
     val counters: StateFlow<List<Counter>> = _counters.asStateFlow()
@@ -19,39 +17,37 @@ class DaysSinceViewModel(application: Application) : AndroidViewModel(applicatio
     private var nextId = 1L
 
     init {
-        // Carga inicial desde DataStore
+        // Load from DataStore when ViewModel starts
         viewModelScope.launch {
-            store.countersFlow.collect { list ->
-                _counters.value = list
-                // Recalcular nextId en base a lo cargado
-                nextId = (list.maxOfOrNull { it.id } ?: 0L) + 1L
+            dataStore.countersFlow.collect { saved ->
+                _counters.value = saved
+                nextId = (saved.maxOfOrNull { it.id } ?: 0L) + 1
             }
         }
     }
 
     fun addCounter(title: String, startDate: LocalDate) {
-        val trimmed = title.trim()
-        if (trimmed.isEmpty()) return
-        val updated = _counters.value + Counter(id = nextId++, title = trimmed, startDate = startDate)
-        setAndPersist(updated)
+        val newCounter = Counter(nextId++, title.trim(), startDate)
+        val updated = _counters.value + newCounter
+        save(updated)
     }
 
     fun resetCounter(id: Long) {
         val updated = _counters.value.map { c ->
             if (c.id == id) c.copy(startDate = LocalDate.now()) else c
         }
-        setAndPersist(updated)
+        save(updated)
     }
 
     fun deleteCounter(id: Long) {
         val updated = _counters.value.filterNot { it.id == id }
-        setAndPersist(updated)
+        save(updated)
     }
 
-    // --- Persistencia ---
-
-    private fun setAndPersist(list: List<Counter>) {
+    private fun save(list: List<Counter>) {
         _counters.value = list
-        viewModelScope.launch { store.saveCounters(list) }
+        viewModelScope.launch {
+            dataStore.saveCounters(list)
+        }
     }
 }

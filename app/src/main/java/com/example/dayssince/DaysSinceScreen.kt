@@ -22,7 +22,6 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import java.time.LocalDate
 import androidx.compose.ui.platform.LocalContext
 
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DaysSinceScreen(vm: DaysSinceViewModel = viewModel()) {
@@ -43,7 +42,7 @@ fun DaysSinceScreen(vm: DaysSinceViewModel = viewModel()) {
                 onClick = { showAddDialog = true },
                 containerColor = MaterialTheme.colorScheme.primary
             ) {
-                Icon(Icons.Rounded.Add, contentDescription = "Añadir")
+                Icon(Icons.Rounded.Add, contentDescription = "Add")
             }
         }
     ) { padding ->
@@ -76,7 +75,6 @@ fun DaysSinceScreen(vm: DaysSinceViewModel = viewModel()) {
                     item {
                         Spacer(Modifier.height(64.dp))
                     }
-
                 }
             }
         }
@@ -105,12 +103,12 @@ private fun EmptyState(onAdd: () -> Unit) {
         Text("🌸", style = MaterialTheme.typography.displayLarge)
         Spacer(Modifier.height(8.dp))
         Text(
-            "¡Todo listo para empezar!",
+            "All set to begin!",
             style = MaterialTheme.typography.titleLarge
         )
         Spacer(Modifier.height(6.dp))
         Text(
-            "Crea tu primer contador con el botón +",
+            "Create your first counter with the + button",
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
         )
@@ -118,7 +116,7 @@ private fun EmptyState(onAdd: () -> Unit) {
         FilledTonalButton(onClick = onAdd) {
             Icon(Icons.Rounded.Add, contentDescription = null)
             Spacer(Modifier.width(8.dp))
-            Text("Nuevo contador")
+            Text("New counter")
         }
     }
 }
@@ -141,7 +139,7 @@ private fun CounterCard(
                 .padding(16.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Bloque de días grande
+            // Main counter block
             Column(Modifier.weight(1f)) {
                 Text(
                     counter.title,
@@ -155,26 +153,26 @@ private fun CounterCard(
                     style = MaterialTheme.typography.displaySmall.copy(fontWeight = FontWeight.ExtraBold)
                 )
                 Text(
-                    "días",
+                    "days",
                     style = MaterialTheme.typography.labelLarge,
                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
                 )
                 Spacer(Modifier.height(8.dp))
                 AssistChip(
                     onClick = {},
-                    label = { Text("Desde ${counter.startDate}") }
+                    label = { Text("Since ${counter.startDate}") }
                 )
             }
 
             Spacer(Modifier.width(8.dp))
 
-            // Botones redonditos
+            // Rounded buttons
             Column(
                 verticalArrangement = Arrangement.spacedBy(8.dp),
                 horizontalAlignment = Alignment.End
             ) {
                 FilledTonalIconButton(onClick = onReset) {
-                    Icon(Icons.Rounded.Refresh, contentDescription = "Reiniciar fecha")
+                    Icon(Icons.Rounded.Refresh, contentDescription = "Reset date")
                 }
                 FilledTonalIconButton(
                     onClick = onDelete,
@@ -182,7 +180,7 @@ private fun CounterCard(
                         containerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.12f)
                     )
                 ) {
-                    Icon(Icons.Rounded.Delete, contentDescription = "Eliminar")
+                    Icon(Icons.Rounded.Delete, contentDescription = "Delete")
                 }
             }
         }
@@ -200,27 +198,27 @@ private fun AddCounterDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Nuevo contador") },
+        title = { Text("New counter") },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 OutlinedTextField(
                     value = title,
                     onValueChange = { title = it },
-                    label = { Text("Título") },
+                    label = { Text("Title") },
                     singleLine = true
                 )
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    AssistChip(onClick = { }, label = { Text("Fecha: $date") })
+                    AssistChip(onClick = { }, label = { Text("Date: $date") })
                     TextButton(onClick = {
                         DatePickerDialog(
                             context,
                             { _, y, m, d -> date = LocalDate.of(y, m + 1, d) },
                             date.year, date.monthValue - 1, date.dayOfMonth
                         ).show()
-                    }) { Text("Cambiar") }
+                    }) { Text("Change") }
                 }
             }
         },
@@ -228,8 +226,8 @@ private fun AddCounterDialog(
             Button(
                 enabled = title.isNotBlank(),
                 onClick = { onConfirm(title.trim(), date) }
-            ) { Text("Crear") }
+            ) { Text("Create") }
         },
-        dismissButton = { TextButton(onClick = onDismiss) { Text("Cancelar") } }
+        dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } }
     )
 }
