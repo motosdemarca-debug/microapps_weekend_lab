@@ -2,9 +2,10 @@ name: Android CI
 
 on:
   push:
-    branches: [ "main" ]
+    branches: [ "master", "main" ]   # <-- ahora cubre master y main
   pull_request:
-    branches: [ "main" ]
+    branches: [ "master", "main" ]
+  workflow_dispatch:                  # <-- botón "Run workflow" manual
 
 jobs:
   build:
@@ -30,11 +31,10 @@ jobs:
         run: ./gradlew test --stacktrace
 
       - name: Build Release AAB (unsigned)
-        # Si tu módulo NO se llama 'app', cambia :app: por :<tu-modulo>:
-        run: ./gradlew :app:bundleRelease --stacktrace
+        run: ./gradlew :app:bundleRelease --stacktrace   # cambia :app: si tu módulo tiene otro nombre
 
       - name: Upload AAB artifact
         uses: actions/upload-artifact@v4
         with:
           name: dayssince-release-aab
-          path: app/build/outputs/bundle/release/*.aab
+          path: app/build/outputs/bundle/release/*.aab   # ajusta "app" si tu módulo se llama distinto
