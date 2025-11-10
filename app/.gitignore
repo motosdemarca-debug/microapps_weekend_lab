@@ -1,1 +1,19 @@
-/build
+# --- Android / Kotlin / Gradle ---
+*.iml
+.gradle/
+**/build/
+captures/
+.externalNativeBuild/
+.idea/
+local.properties
+*.keystore
+*.jks
+keystore.properties
+
+# --- OS temporales ---
+.DS_Store
+Thumbs.db
+
+# --- Logs & cache ---
+*.log
+**/.cxx/
