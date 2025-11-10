@@ -1,7 +1,8 @@
+import java.util.Properties
+
 plugins {
-    alias(libs.plugins.android.application)
-    alias(libs.plugins.kotlin.android)
-    alias(libs.plugins.kotlin.compose)
+    id("com.android.application")
+    id("org.jetbrains.kotlin.android")
 }
 
 android {
@@ -10,59 +11,65 @@ android {
 
     defaultConfig {
         applicationId = "com.example.dayssince"
-        minSdk = 26
+        minSdk = 24
         targetSdk = 34
         versionCode = 1
-        versionName = "1.0"
+        versionName = "1.0.0"
+
+        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        vectorDrawables.useSupportLibrary = true
     }
 
-    // 🔐 Firma release (rellena tus contraseñas reales o usa Generate Signed Bundle)
+    // --- Firma opcional (solo si existe el keystore local) ---
+    val keystorePropsFile = rootProject.file("keystore.properties")
+    val hasKeystore = keystorePropsFile.exists()
+    val keystoreProps = Properties().apply {
+        if (hasKeystore) load(keystorePropsFile.inputStream())
+    }
+
     signingConfigs {
-        create("release") {
-            // Si el .jks está en la raíz del proyecto:
-            storeFile = file("dayssince-release.jks")
-            storePassword = "REEMPLAZA_CON_TU_PASSWORD"
-            keyAlias = "dayssince"
-            keyPassword = "REEMPLAZA_CON_TU_PASSWORD"
+        if (hasKeystore) {
+            create("release") {
+                storeFile = file(keystoreProps["storeFile"] ?: "")
+                storePassword = (keystoreProps["storePassword"] ?: "") as String
+                keyAlias = (keystoreProps["keyAlias"] ?: "") as String
+                keyPassword = (keystoreProps["keyPassword"] ?: "") as String
+            }
         }
     }
 
     buildTypes {
-        release {
-            signingConfig = signingConfigs.getByName("release")
-            isMinifyEnabled = false
+        getByName("release") {
+            isMinifyEnabled = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
+            val isCi = System.getenv("CI")?.toBoolean() == true
+            if (hasKeystore && !isCi) {
+                signingConfig = signingConfigs.getByName("release")
+            }
         }
-        debug {
-            // sin firma especial
+        getByName("debug") {
             isMinifyEnabled = false
         }
+    }
+
+    compileOptions {
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
+    }
+
+    kotlinOptions {
+        jvmTarget = "17"
     }
 
     buildFeatures {
         compose = true
     }
 
-    // Con el plugin 'kotlin-compose' no necesitas fijar manualmente el compiler extension version.
-    // composeOptions { kotlinCompilerExtensionVersion = "x.y.z" }
-
-    compileOptions {
-        // ✅ Mantén Java 21 para evitar el mismatch Kotlin/Java
-        sourceCompatibility = JavaVersion.VERSION_21
-        targetCompatibility = JavaVersion.VERSION_21
-        // Para usar java.time en minSdk bajos:
-        isCoreLibraryDesugaringEnabled = true
-    }
-
-    // Asegura toolchain y bytecode a 21
-    kotlin {
-        jvmToolchain(21)
-        compilerOptions {
-            jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_21)
-        }
+    composeOptions {
+        kotlinCompilerExtensionVersion = "1.5.3"
     }
 
     packaging {
@@ -73,35 +80,28 @@ android {
 }
 
 dependencies {
-    // Compose BOM (desde tu version catalog)
-    implementation(platform(libs.androidx.compose.bom))
+    // --- Compose core ---
+    implementation(platform("androidx.compose:compose-bom:2024.09.00"))
+    implementation("androidx.compose.ui:ui")
+    implementation("androidx.compose.ui:ui-graphics")
+    implementation("androidx.compose.ui:ui-tooling-preview")
+    implementation("androidx.compose.material3:material3")
 
-    implementation(libs.androidx.core.ktx)
-    implementation(libs.androidx.activity.compose)
-    implementation(libs.androidx.lifecycle.runtime.ktx)
+    // --- AndroidX + Lifecycle ---
+    implementation("androidx.core:core-ktx:1.10.1")
+    implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.6.1")
+    implementation("androidx.activity:activity-compose:1.8.0")
 
-    // Compose UI/M3
-    implementation(libs.androidx.compose.ui)
-    implementation(libs.androidx.compose.ui.graphics)
-    implementation(libs.androidx.compose.ui.tooling.preview)
-    implementation(libs.androidx.compose.material3)
-
-    // Test/Debug
-    testImplementation(libs.junit)
-    androidTestImplementation(platform(libs.androidx.compose.bom))
-    androidTestImplementation(libs.androidx.junit)
-    androidTestImplementation(libs.androidx.espresso.core)
-    androidTestImplementation(libs.androidx.compose.ui.test.junit4)
-    debugImplementation(libs.androidx.compose.ui.tooling)
-    debugImplementation(libs.androidx.compose.ui.test.manifest)
-
-    // 🔧 Desugaring (para java.time)
-    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.0.4")
-
-    // Extras que estás usando y no están en el catalog:
-    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.6")
-    implementation("androidx.compose.material:material-icons-extended:1.7.5")
+    // --- DataStore (persistencia local) ---
     implementation("androidx.datastore:datastore-preferences:1.1.1")
-    implementation("com.google.code.gson:gson:2.10.1")
-    implementation("androidx.work:work-runtime-ktx:2.9.0")
+
+    // --- Tests ---
+    testImplementation("junit:junit:4.13.2")
+    androidTestImplementation("androidx.test.ext:junit:1.1.5")
+    androidTestImplementation("androidx.test.espresso:espresso-core:3.5.1")
+    androidTestImplementation(platform("androidx.compose:compose-bom:2024.09.00"))
+    androidTestImplementation("androidx.compose.ui:ui-test-junit4")
+
+    debugImplementation("androidx.compose.ui:ui-tooling")
+    debugImplementation("androidx.compose.ui:ui-test-manifest")
 }
