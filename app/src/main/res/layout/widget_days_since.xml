@@ -1,27 +1,27 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
     android:orientation="vertical"
     android:gravity="center"
     android:padding="8dp"
-    android:background="@android:color/transparent"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:background="@drawable/widget_bg_round">
 
-    <!-- Texto grande de días -->
     <TextView
         android:id="@+id/tvDays"
-        android:text="0"
-        android:textSize="22sp"
-        android:textStyle="bold"
         android:layout_width="wrap_content"
-        android:layout_height="wrap_content" />
+        android:layout_height="wrap_content"
+        android:text="0"
+        android:textSize="26sp"
+        android:textStyle="bold"
+        android:textColor="#2A2B2E" />
 
-    <!-- Etiqueta -->
     <TextView
         android:id="@+id/tvLabel"
-        android:text="days"
-        android:textSize="12sp"
-        android:alpha="0.75"
         android:layout_width="wrap_content"
-        android:layout_height="wrap_content" />
+        android:layout_height="wrap_content"
+        android:text="Sin contador"
+        android:textSize="12sp"
+        android:textColor="#7A7D85" />
 </LinearLayout>

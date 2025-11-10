@@ -3,7 +3,10 @@ package com.example.dayssince
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import java.time.LocalDate
 
@@ -14,40 +17,47 @@ class DaysSinceViewModel(app: Application) : AndroidViewModel(app) {
     private val _counters = MutableStateFlow<List<Counter>>(emptyList())
     val counters: StateFlow<List<Counter>> = _counters.asStateFlow()
 
-    private var nextId = 1L
-
     init {
-        // Load from DataStore when ViewModel starts
+        // Cargar y observar los contadores guardados
         viewModelScope.launch {
-            dataStore.countersFlow.collect { saved ->
-                _counters.value = saved
-                nextId = (saved.maxOfOrNull { it.id } ?: 0L) + 1
+            dataStore.countersFlow.collectLatest { stored ->
+                _counters.value = stored
             }
         }
     }
 
+    /** Crea un nuevo contador. */
     fun addCounter(title: String, startDate: LocalDate) {
-        val newCounter = Counter(nextId++, title.trim(), startDate)
-        val updated = _counters.value + newCounter
+        val newItem = Counter(
+            id = System.currentTimeMillis(), // id simple suficiente para una microapp
+            title = title.trim(),
+            startDate = startDate
+        )
+        val updated = _counters.value.toMutableList().apply { add(0, newItem) }
         save(updated)
     }
 
-    fun resetCounter(id: Long) {
+    /** Resetea la fecha de inicio de un contador existente. */
+    fun resetCounter(id: Long, newStartDate: LocalDate = LocalDate.now()) {
         val updated = _counters.value.map { c ->
-            if (c.id == id) c.copy(startDate = LocalDate.now()) else c
+            if (c.id == id) c.copy(startDate = newStartDate) else c
         }
         save(updated)
     }
 
+    /** Borra un contador por id. */
     fun deleteCounter(id: Long) {
         val updated = _counters.value.filterNot { it.id == id }
         save(updated)
     }
 
+    /** Guarda en DataStore y fuerza el repintado del widget. */
     private fun save(list: List<Counter>) {
         _counters.value = list
         viewModelScope.launch {
             dataStore.saveCounters(list)
+            // 🔔 tras guardar, refrescamos el widget
+            DaysSinceWidgetProvider.forceUpdate(getApplication())
         }
     }
 }
