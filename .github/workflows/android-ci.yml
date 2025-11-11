@@ -25,13 +25,13 @@ jobs:
         run: chmod +x ./gradlew
 
       - name: Build Debug
-        run: ./gradlew assembleDebug --stacktrace
+        run: ./gradlew assembleDebug --stacktrace --warning-mode all
 
       - name: Unit tests
-        run: ./gradlew test --stacktrace
+        run: ./gradlew test --stacktrace --warning-mode all
 
       - name: Build Release AAB (unsigned)
-        run: ./gradlew :app:bundleRelease --stacktrace   # cambia :app: si tu módulo tiene otro nombre
+        run: ./gradlew :app:bundleRelease --stacktrace --warning-mode all
 
       - name: Upload AAB artifact
         uses: actions/upload-artifact@v4
