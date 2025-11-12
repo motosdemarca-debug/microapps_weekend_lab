@@ -3,15 +3,14 @@ import java.util.Properties
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
-    alias(libs.plugins.kotlin.compose)
 }
 
 android {
-    namespace = "com.example.dayssince"
+    namespace = "com.example.dayssince" // cámbialo cuando decidas tu paquete final
     compileSdk = 34
 
     defaultConfig {
-        applicationId = "com.example.dayssince"
+        applicationId = "com.example.dayssince" // idem
         minSdk = 24
         targetSdk = 34
         versionCode = 1
@@ -21,7 +20,7 @@ android {
         vectorDrawables.useSupportLibrary = true
     }
 
-    // --- Firma opcional (solo si existe el keystore local) ---
+    // --- Firma opcional (solo si existe keystore local) ---
     val keystorePropsFile = rootProject.file("keystore.properties")
     val hasKeystore = keystorePropsFile.exists()
     val keystoreProps = Properties().apply {
@@ -46,6 +45,8 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
+
+            // En CI (GitHub Actions) NO firmamos → AAB sin firmar (Play firmará).
             val isCi = System.getenv("CI")?.toBoolean() == true
             if (hasKeystore && !isCi) {
                 signingConfig = signingConfigs.getByName("release")
@@ -59,6 +60,8 @@ android {
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
+        // Desugaring para java.time y APIs Java 8+ en minSdk 24
+        isCoreLibraryDesugaringEnabled = true
     }
 
     kotlinOptions {
@@ -69,6 +72,7 @@ android {
         compose = true
     }
 
+    // Kotlin 2.0.x + Compose Compiler recomendado
     composeOptions {
         kotlinCompilerExtensionVersion = "1.7.2"
     }
@@ -81,20 +85,25 @@ android {
 }
 
 dependencies {
-    // --- Compose core ---
+    // --- Compose BOM ---
     implementation(platform("androidx.compose:compose-bom:2024.09.00"))
+
+    // --- Compose core ---
     implementation("androidx.compose.ui:ui")
     implementation("androidx.compose.ui:ui-graphics")
     implementation("androidx.compose.ui:ui-tooling-preview")
     implementation("androidx.compose.material3:material3")
 
-    // --- AndroidX + Lifecycle ---
+    // --- AndroidX + Lifecycle + Activity Compose ---
     implementation("androidx.core:core-ktx:1.10.1")
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.6.1")
     implementation("androidx.activity:activity-compose:1.8.0")
 
     // --- DataStore (persistencia local) ---
     implementation("androidx.datastore:datastore-preferences:1.1.1")
+
+    // --- Desugaring (java.time, etc.) ---
+    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.0.4")
 
     // --- Tests ---
     testImplementation("junit:junit:4.13.2")
